@@ -3,6 +3,9 @@ package com.logshield.model;
 // LogEntry.java — the heart of LogShield.
 // Every single log line we read from a file becomes one of these objects.
 // Think of it as a sticky note: timestamp, how bad it is, and what happened.
+
+// TODO: Improve CSV parsing to handle quoted fields and edge cases
+
 public class LogEntry {
 
     // We keep these private so nothing outside this class can just reach in
