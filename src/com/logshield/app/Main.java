@@ -1,59 +1,60 @@
 package com.logshield.app;
 
 import com.logshield.algorithm.AlgorithmProvider;
+import com.logshield.engine.RegistryManager;
 import com.logshield.model.LogEntry;
 
 public class Main {
 
     public static void main(String[] args) {
 
-        // ── BUILD TEST ARRAY ──────────────────────────────────────────
-        // Intentionally unsorted so cycleSort has real work to do
-        LogEntry[] logs = {
-                new LogEntry("2024-01-15 10:30:00", "INFO",  "Server started"),
-                new LogEntry("2024-01-15 10:31:00", "ERROR", "NullPointerException in UserService"),
-                new LogEntry("2024-01-15 10:32:00", "WARN",  "High memory usage"),
-                new LogEntry("2024-01-15 10:33:00", "ERROR", "Database connection failed"),
-                new LogEntry("2024-01-15 10:34:00", "INFO",  "Health check passed"),
-                new LogEntry("2024-01-15 10:35:00", "WARN",  "Slow query detected")
-        };
+        // ── TEST 1: Singleton guarantee ───────────────────────────────
+        System.out.println("=== TEST 1: Singleton Check ===");
+        RegistryManager rm1 = RegistryManager.getInstance();
+        RegistryManager rm2 = RegistryManager.getInstance();
+        System.out.println("Same instance: " + (rm1 == rm2)); // must print true
 
-        // ── BEFORE SORT ───────────────────────────────────────────────
-        System.out.println("=== BEFORE cycleSort ===");
-        for (LogEntry e : logs) {
-            System.out.println("Score = " + e.getSeverityScore() + " -> " + e);
+        // ── TEST 2: addLog() — writes to cache AND disk ───────────────
+        System.out.println("\n=== TEST 2: addLog() ===");
+        RegistryManager rm = RegistryManager.getInstance();
+        rm.addLog(new LogEntry("2024-01-15 10:30:00", "INFO",  "Server started"));
+        rm.addLog(new LogEntry("2024-01-15 10:31:00", "ERROR", "NullPointerException in UserService"));
+        rm.addLog(new LogEntry("2024-01-15 10:32:00", "WARN",  "High memory usage"));
+        rm.addLog(new LogEntry("2024-01-15 10:33:00", "ERROR", "Database connection failed"));
+        rm.addLog(new LogEntry("2024-01-15 10:34:00", "INFO",  "Health check passed"));
+        rm.addLog(new LogEntry("2024-01-15 10:35:00", "WARN",  "Slow query detected"));
+        System.out.println("Added 6 log entries.");
+
+        // ── TEST 3: getLogs() — unsorted ──────────────────────────────
+        System.out.println("\n=== TEST 3: getLogs() before sort ===");
+        for (LogEntry e : rm.getLogs()) {
+            System.out.println(e);
         }
 
-        // ── RUN CYCLE SORT ────────────────────────────────────────────
-        AlgorithmProvider.cycleSort(logs);
-
-        // ── AFTER SORT ────────────────────────────────────────────────
-        System.out.println("\n=== AFTER cycleSort (ascending severityScore) ===");
-        for (LogEntry e : logs) {
-            System.out.println("Score = " + e.getSeverityScore() + " -> " + e);
+        // ── TEST 4: sortLogs() — CycleSort via RegistryManager ────────
+        System.out.println("\n=== TEST 4: sortLogs() ===");
+        rm.sortLogs();
+        for (LogEntry e : rm.getLogs()) {
+            System.out.println(e);
         }
 
-        // ── BINARY SEARCH — target exists ─────────────────────────────
-        System.out.println("\n=== binarySearch for severityScore = 3 (ERROR) ===");
-        // Note: returns any matching index, not guaranteed first occurrence
-        int index = AlgorithmProvider.binarySearch(logs, 3);
-        if (index != -1) {
-            System.out.println("Found at index " + index + ": " + logs[index]);
-        } else {
-            System.out.println("Not found.");
+        // ── TEST 5: searchBySeverity() — Binary Search ────────────────
+        System.out.println("\n=== TEST 5: searchBySeverity(3) ===");
+        LogEntry found = rm.searchBySeverity(3);
+        System.out.println(found != null ? "Found: " + found : "Not found.");
+
+        System.out.println("\n=== TEST 5b: searchBySeverity(99) ===");
+        LogEntry missing = rm.searchBySeverity(99);
+        System.out.println(missing != null ? "Found: " + missing : "Correctly returned null.");
+
+        // ── TEST 6: File persistence — restart simulation ─────────────
+        System.out.println("\n=== TEST 6: loadFromFile() — simulating app restart ===");
+        // Create a fresh manager simulation by loading from disk
+        // In real usage this runs once at startup in LogShieldApp
+        RegistryManager.getInstance().loadFromFile("data/logs.txt");
+        System.out.println("Logs reloaded from disk:");
+        for (LogEntry e : rm.getLogs()) {
+            System.out.println(e);
         }
-
-        // ── BINARY SEARCH — target does not exist ─────────────────────
-        System.out.println("\n=== binarySearch for severityScore = 99 (missing) ===");
-        int missing = AlgorithmProvider.binarySearch(logs, 99);
-        System.out.println(missing == -1 ? "Correctly returned -1" : "ERROR: should not find 99");
-        // ── EDGE CASE: Empty array ─────────────────────────────
-        System.out.println("\n=== EDGE CASE: Empty array ===");
-
-        LogEntry[] empty = {};  // Create an empty array
-
-        AlgorithmProvider.cycleSort(empty);  // Should NOT crash
-
-        System.out.println("Handled empty array without crash.");
     }
 }
