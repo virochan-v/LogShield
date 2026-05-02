@@ -3,6 +3,7 @@ package com.logshield.engine;
 import com.logshield.model.LogEntry;
 import com.logshield.storage.FileHandler;
 import com.logshield.algorithm.AlgorithmProvider;
+import com.logshield.trie.Trie;
 
 import java.util.HashMap;
 
@@ -65,12 +66,16 @@ public class RegistryManager {
 
     private FileHandler fileHandler;
 
+    // Trie for pattern tracking — stores message frequencies for O(L) lookup
+    private Trie trie;
+
     // Private constructor — the gate that enforces the Singleton guarantee.
     // It runs exactly once, ever, for the entire lifetime of the JVM.
     private RegistryManager() {
         this.logCache    = new HashMap<>();
         this.logsArray   = new LogEntry[0];
         this.fileHandler = new FileHandler();
+        this.trie = new Trie(); // initialize Trie once for the entire application lifecycle
     }
 
 
@@ -135,6 +140,9 @@ public class RegistryManager {
         // If two events share the same timestamp, the later one wins — a known
         // limitation of using timestamp as key. A UUID key would avoid this entirely.
         logCache.put(entry.getTimestamp(), entry);
+        // Update Trie with the new log message.
+        // This ensures pattern frequency is tracked in real time as logs are added.
+        trie.incrementFrequency(entry.getMessage());
     }
 
 
@@ -193,6 +201,11 @@ public class RegistryManager {
     // Time Complexity: O(1) — just returns the existing reference
     public LogEntry[] getSortedLogs() {
         return logsArray;
+    }
+    // Returns all logs as a List for CLI display
+    // Time Complexity: O(n) — converts HashMap values to List
+    public java.util.List<LogEntry> getAllLogs() {
+        return new java.util.ArrayList<>(logCache.values());
     }
     // Clears the log file on disk — use only for testing/reset
     // Time Complexity: O(1) — just overwrites with empty content
@@ -257,9 +270,22 @@ public class RegistryManager {
         // We use timestamp as key, exactly as addLog() does, keeping behaviour consistent.
         for (LogEntry entry : loaded) {
             logCache.put(entry.getTimestamp(), entry);
+            // Without this, Trie would be empty after application restart
+            trie.incrementFrequency(entry.getMessage());
         }
 
         System.out.println("[RegistryManager] Loaded " + loaded.size()
                 + " log entries from '" + filePath + "'.");
+    }
+    /**
+     * Returns how many times a given log message pattern has appeared.
+     *
+     * <p>Delegates directly to Trie for O(L) lookup, where L is pattern length.
+     *
+     * @param pattern the log message to search
+     * @return frequency count, or 0 if pattern does not exist
+     */
+    public int getPatternFrequency(String pattern) {
+        return trie.getFrequency(pattern);
     }
 }
