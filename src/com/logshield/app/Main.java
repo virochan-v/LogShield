@@ -8,6 +8,8 @@ public class Main {
 
     public static void main(String[] args) {
 
+        RegistryManager.getInstance().clearFile(); // Fresh start for each test run
+
         // ── TEST 1: Singleton guarantee ───────────────────────────────
         System.out.println("=== TEST 1: Singleton Check ===");
         RegistryManager rm1 = RegistryManager.getInstance();
@@ -34,7 +36,7 @@ public class Main {
         // ── TEST 4: sortLogs() — CycleSort via RegistryManager ────────
         System.out.println("\n=== TEST 4: sortLogs() ===");
         rm.sortLogs();
-        for (LogEntry e : rm.getLogs()) {
+        for (LogEntry e : rm.getSortedLogs()) {  // ← use getSortedLogs() not getLogs()
             System.out.println(e);
         }
 
@@ -51,7 +53,7 @@ public class Main {
         System.out.println("\n=== TEST 6: loadFromFile() — simulating app restart ===");
         // Create a fresh manager simulation by loading from disk
         // In real usage this runs once at startup in LogShieldApp
-        RegistryManager.getInstance().loadFromFile("data/logs.txt");
+        RegistryManager.getInstance().loadFromFile(RegistryManager.LOG_FILE_PATH);
         System.out.println("Logs reloaded from disk:");
         for (LogEntry e : rm.getLogs()) {
             System.out.println(e);

@@ -33,6 +33,10 @@ import java.util.HashMap;
 
 public class RegistryManager {
 
+    // Single source of truth for log file path
+    // Change this one line if the path ever needs updating
+    public static final String LOG_FILE_PATH = "data/logs.txt";
+
     // The one and only instance. volatile is NOT optional here — see explanation above.
     private static volatile RegistryManager instance;
 
@@ -125,7 +129,7 @@ public class RegistryManager {
 
         // Step 1: Write to disk FIRST. If the JVM crashes after this line, the log
         // is safe on disk. If we wrote to HashMap first and then crashed, we'd lose it.
-        fileHandler.appendLog(entry, "logs.txt");
+        fileHandler.appendLog(entry, LOG_FILE_PATH);
 
         // Step 2: Mirror into the in-memory cache for fast lookups.
         // If two events share the same timestamp, the later one wins — a known
@@ -178,15 +182,28 @@ public class RegistryManager {
      * {@link #searchBySeverity(int)} — binary search requires a sorted array.
      */
     public void sortLogs() {
-
-        // Always rebuild logsArray from the HashMap before sorting.
-        // addLog() modifies the HashMap but does NOT automatically update logsArray —
-        // they would drift out of sync between calls. getLogs() is the re-sync step.
-        getLogs();
-
-        // Delegate the sort to AlgorithmProvider — RegistryManager doesn't
-        // need to know HOW sorting works, only that it does.
+        // Rebuild array from HashMap first
+        logsArray = logCache.values().toArray(new LogEntry[0]);
+        // Sort in place — do NOT call getLogs() after this
+        // getLogs() rebuilds from HashMap and destroys sort order
         AlgorithmProvider.cycleSort(logsArray);
+    }
+    // Returns the already-sorted array without rebuilding from HashMap
+    // Use this ONLY after calling sortLogs()
+    // Time Complexity: O(1) — just returns the existing reference
+    public LogEntry[] getSortedLogs() {
+        return logsArray;
+    }
+    // Clears the log file on disk — use only for testing/reset
+    // Time Complexity: O(1) — just overwrites with empty content
+    public void clearFile() {
+        try (java.io.BufferedWriter writer = new java.io.BufferedWriter(
+                new java.io.FileWriter(LOG_FILE_PATH, false))) {
+            // Opening with false flag truncates the file to zero bytes
+            writer.write("");
+        } catch (java.io.IOException e) {
+            System.err.println("[RegistryManager] Could not clear log file: " + e.getMessage());
+        }
     }
 
 
