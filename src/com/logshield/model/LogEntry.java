@@ -13,8 +13,16 @@ public class LogEntry {
     private String timestamp;    // When did this happen? e.g. "2024-01-15 10:32:01"
     private String level;        // How loud is the alarm? INFO / WARN / ERROR
     private String message;      // What actually happened, in plain English
-    private int severityScore;   // A number we can sort/filter on — ERROR=3, WARN=2, INFO=1
+    private int severityScore;
 
+    // Severity map — OCP compliant: adding a new level means adding one entry here
+    // The constructor never needs to change when new levels are introduced
+    // Map.of() creates an immutable map — values cannot be changed at runtime
+    private static final java.util.Map<String, Integer> SEVERITY_MAP = java.util.Map.of(
+            "ERROR", 3,
+            "WARN",  2,
+            "INFO",  1
+    );
 
     // The constructor — runs the moment someone does 'new LogEntry(...)'
     // We only ask for 3 things. The severity is our job to figure out, not the caller's.
@@ -26,17 +34,9 @@ public class LogEntry {
 
         // Translate the level word into a number once, right here, right now.
         // This way, no other class ever needs to know the INFO=1 rule — it lives here.
-        switch (level) {
-            case "ERROR":
-                this.severityScore = 3;  // The house is on fire
-                break;
-            case "WARN":
-                this.severityScore = 2;  // Something smells smoky
-                break;
-            default:
-                this.severityScore = 1;  // All good, just keeping a diary
-                break;
-        }
+        // getOrDefault returns 1 (INFO) for any unrecognised level
+        // Adding "CRITICAL" → 4 tomorrow requires zero changes here
+        this.severityScore = SEVERITY_MAP.getOrDefault(level.toUpperCase(), 1);
     }
 
 
