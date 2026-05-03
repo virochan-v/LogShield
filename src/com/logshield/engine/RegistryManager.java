@@ -261,6 +261,8 @@ public class RegistryManager {
      */
     public void loadFromFile(String filePath) {
 
+        this.trie = new Trie(); // reset Trie to prevent frequency double-counting on reload
+
         // Ask FileHandler to parse the CSV file and return a typed List<LogEntry>.
         // FileHandler handles all I/O exceptions internally and returns an empty list
         // if the file doesn't exist — so this call is always safe, even on first run.
