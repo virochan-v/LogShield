@@ -27,7 +27,7 @@ import java.util.HashMap;
  * before being mirrored into the in-memory cache, so no log entry is lost on a JVM crash.
  *
  * @author  Virochan V
- * @version 1.0
+ * @version 2.0
  * @see     com.logshield.storage.FileHandler
  * @see     com.logshield.algorithm.AlgorithmProvider
  */
@@ -71,11 +71,11 @@ public class RegistryManager {
 
     // Private constructor — the gate that enforces the Singleton guarantee.
     // It runs exactly once, ever, for the entire lifetime of the JVM.
-    private RegistryManager() {
+    private RegistryManager(FileHandler fileHandler) {
         this.logCache    = new HashMap<>();
         this.logsArray   = new LogEntry[0];
-        this.fileHandler = new FileHandler();
-        this.trie = new Trie(); // initialize Trie once for the entire application lifecycle
+        this.fileHandler = fileHandler;  // injected — not created here
+        this.trie        = new Trie(); // initialize Trie once for the entire application lifecycle
     }
 
 
@@ -106,11 +106,24 @@ public class RegistryManager {
                 // the instance while we were waiting for the lock. Without this second
                 // check, we'd build a second instance and throw away the first.
                 if (instance == null) {
-                    instance = new RegistryManager();
+                    instance = new RegistryManager(new FileHandler());
                 }
             }
         }
 
+        return instance;
+    }
+    // Overloaded getInstance for dependency injection — used in testing
+    // Allows injecting a mock FileHandler without touching production code
+    // Time Complexity: O(1) — same as standard getInstance()
+    public static RegistryManager getInstance(FileHandler fileHandler) {
+        if (instance == null) {
+            synchronized (RegistryManager.class) {
+                if (instance == null) {
+                    instance = new RegistryManager(fileHandler);
+                }
+            }
+        }
         return instance;
     }
 
