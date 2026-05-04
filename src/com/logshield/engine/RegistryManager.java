@@ -3,8 +3,7 @@ package com.logshield.engine;
 import com.logshield.model.LogEntry;
 import com.logshield.storage.FileHandler;
 import com.logshield.algorithm.AlgorithmProvider;
-import com.logshield.trie.Trie;
-
+import com.logshield.trie.TrieService;
 import java.util.HashMap;
 
 /**
@@ -27,7 +26,7 @@ import java.util.HashMap;
  * before being mirrored into the in-memory cache, so no log entry is lost on a JVM crash.
  *
  * @author  Virochan V
- * @version 3.0
+ * @version 4.0
  * @see     com.logshield.storage.FileHandler
  * @see     com.logshield.algorithm.AlgorithmProvider
  */
@@ -66,8 +65,8 @@ public class RegistryManager implements IRegistry {
 
     private FileHandler fileHandler;
 
-    // Trie for pattern tracking — stores message frequencies for O(L) lookup
-    private Trie trie;
+    // Delegated to TrieService — RegistryManager coordinates, TrieService owns Trie logic
+    private TrieService trieService;
 
     // Private constructor — the gate that enforces the Singleton guarantee.
     // It runs exactly once, ever, for the entire lifetime of the JVM.
@@ -75,7 +74,7 @@ public class RegistryManager implements IRegistry {
         this.logCache    = new HashMap<>();
         this.logsArray   = new LogEntry[0];
         this.fileHandler = fileHandler;  // injected — not created here
-        this.trie        = new Trie(); // initialize Trie once for the entire application lifecycle
+        this.trieService = new TrieService(); // Inject TrieService — pattern tracking responsibility belongs to the service layer
     }
 
 
@@ -153,9 +152,9 @@ public class RegistryManager implements IRegistry {
         // If two events share the same timestamp, the later one wins — a known
         // limitation of using timestamp as key. A UUID key would avoid this entirely.
         logCache.put(entry.getTimestamp(), entry);
-        // Update Trie with the new log message.
-        // This ensures pattern frequency is tracked in real time as logs are added.
-        trie.incrementFrequency(entry.getMessage());
+        // Delegate pattern tracking to TrieService — not our responsibility to know HOW
+        // the Trie works, only that the pattern needs to be tracked
+        trieService.trackPattern(entry.getMessage());
     }
 
 
@@ -274,7 +273,9 @@ public class RegistryManager implements IRegistry {
      */
     public void loadFromFile(String filePath) {
 
-        this.trie = new Trie(); // reset Trie to prevent frequency double-counting on reload
+        // Reset TrieService before repopulating — prevents frequency double-counting
+        // if loadFromFile() is called more than once in the same session
+        trieService.reset();
 
         // Ask FileHandler to parse the CSV file and return a typed List<LogEntry>.
         // FileHandler handles all I/O exceptions internally and returns an empty list
@@ -285,8 +286,8 @@ public class RegistryManager implements IRegistry {
         // We use timestamp as key, exactly as addLog() does, keeping behaviour consistent.
         for (LogEntry entry : loaded) {
             logCache.put(entry.getTimestamp(), entry);
-            // Without this, Trie would be empty after application restart
-            trie.incrementFrequency(entry.getMessage());
+            // Mirror pattern into TrieService so Trie stays in sync with HashMap after reload
+            trieService.trackPattern(entry.getMessage());
         }
 
         System.out.println("[RegistryManager] Loaded " + loaded.size()
@@ -300,7 +301,8 @@ public class RegistryManager implements IRegistry {
      * @param pattern the log message to search
      * @return frequency count, or 0 if pattern does not exist
      */
+    // Delegate lookup to TrieService — O(L) exact match, where L = pattern length
     public int getPatternFrequency(String pattern) {
-        return trie.getFrequency(pattern);
+        return trieService.getFrequency(pattern);
     }
 }
