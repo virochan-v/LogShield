@@ -1,5 +1,6 @@
 package com.logshield.app;
 
+import com.logshield.engine.IRegistry;
 import com.logshield.model.LogEntry;
 import com.logshield.engine.RegistryManager;
 import com.logshield.trie.Trie;
@@ -36,7 +37,7 @@ import java.util.Scanner;
  * </ul>
  *
  * @author  Virochan V
- * @version 1.0
+ * @version 2.0
  * @see     RegistryManager
  * @see     com.logshield.trie.Trie
  */
@@ -60,7 +61,7 @@ public class LogShieldApp {
      * <ul>
      *   <li>{@code static} — one instance per JVM, never per-object.</li>
      *   <li>{@code final} — the reference cannot be reassigned after
-     *       initialisation, preventing accidental replacement mid-session.</li>
+     *       initialization, preventing accidental replacement mid-session.</li>
      * </ul>
      *
      * <p><b>Warning:</b> creating a second {@code Scanner(System.in)} anywhere in
@@ -92,7 +93,7 @@ public class LogShieldApp {
     public static void main(String[] args) {
 
         // Obtain the singleton RegistryManager — NEVER use 'new RegistryManager()'
-        RegistryManager registry = RegistryManager.getInstance();
+        IRegistry registry = RegistryManager.getInstance();
 
         // Load persisted logs into the HashMap cache before showing the menu
         System.out.println("[LogShield] Loading logs from: " + LOG_FILE_PATH);

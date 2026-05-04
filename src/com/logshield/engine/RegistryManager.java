@@ -27,12 +27,12 @@ import java.util.HashMap;
  * before being mirrored into the in-memory cache, so no log entry is lost on a JVM crash.
  *
  * @author  Virochan V
- * @version 2.0
+ * @version 3.0
  * @see     com.logshield.storage.FileHandler
  * @see     com.logshield.algorithm.AlgorithmProvider
  */
 
-public class RegistryManager {
+public class RegistryManager implements IRegistry {
 
     // Single source of truth for log file path
     // Change this one line if the path ever needs updating
