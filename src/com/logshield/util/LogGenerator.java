@@ -1,6 +1,7 @@
 package com.logshield.util;
 
 import com.logshield.engine.RegistryManager;
+import com.logshield.exception.InvalidLevelException;
 import com.logshield.model.LogEntry;
 import com.logshield.storage.FileHandler;
 
@@ -119,7 +120,14 @@ public class LogGenerator {
             }
 
             // Write directly to file — no need to hold all in memory at once
-            fileHandler.appendLog(new LogEntry(timestamp, level, message), OUTPUT_PATH);
+            try {
+                fileHandler.appendLog(new LogEntry(timestamp, level, message), OUTPUT_PATH);
+            } catch (InvalidLevelException e) {
+                // This should never happen — level is always set from our own constants
+                // If it does, it means a bug in the generation logic, not user input
+                System.err.println("[LogGenerator] BUG: Invalid level generated: "
+                        + e.getMessage());
+            }
 
             // Progress heartbeat every 1000 entries
             if (i % PROGRESS_STEP == 0) {

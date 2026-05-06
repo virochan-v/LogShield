@@ -3,7 +3,7 @@ package com.logshield.app;
 import com.logshield.engine.IRegistry;
 import com.logshield.model.LogEntry;
 import com.logshield.engine.RegistryManager;
-import com.logshield.trie.Trie;
+import com.logshield.exception.InvalidLevelException;
 
 import java.util.InputMismatchException;
 import java.util.List;
@@ -37,7 +37,7 @@ import java.util.Scanner;
  * </ul>
  *
  * @author  Virochan V
- * @version 2.0
+ * @version 3.0
  * @see     RegistryManager
  * @see     com.logshield.trie.Trie
  */
@@ -129,9 +129,15 @@ public class LogShieldApp {
                     System.out.print("Enter message: ");
                     String message = scanner.nextLine().trim();
 
-                    LogEntry entry = new LogEntry(timestamp, level, message);
-                    registry.addLog(entry);
-                    System.out.println("[OK] Log entry added: " + entry);
+                    try {
+                        LogEntry entry = new LogEntry(timestamp, level, message);
+                        registry.addLog(entry);
+                        System.out.println("[OK] Log entry added: " + entry);
+                    } catch (InvalidLevelException e) {
+                        // Tell the user exactly what was wrong — not a generic error message
+                        System.out.println("[ERROR] " + e.getMessage());
+                        System.out.println("[INFO] Please enter one of: INFO, WARN, ERROR");
+                    }
                     break;
 
                 case 2: // ── Load logs from file ─────────────────────────────────

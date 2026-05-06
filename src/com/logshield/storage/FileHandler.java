@@ -1,6 +1,8 @@
 package com.logshield.storage;
 
 import com.logshield.model.LogEntry;
+import com.logshield.exception.InvalidLevelException;
+import com.logshield.exception.LogParseException;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -25,7 +27,7 @@ import java.util.List;
  * </ul>
  *
  * @author  Virochan V
- * @version 1.0
+ * @version 2.0
  * @see     com.logshield.model.LogEntry
  * @see     com.logshield.engine.RegistryManager
  */
@@ -117,12 +119,14 @@ public class FileHandler {
                 if (line.trim().isEmpty()) continue;
 
                 try {
-                    logs.add(LogEntry.fromCSV(line));  // Delegate parsing back to LogEntry
-                } catch (ArrayIndexOutOfBoundsException e) {
-                    // A malformed line (e.g. only 2 columns) must NOT abort the whole load.
-                    // We warn and skip, giving the caller whatever valid entries we could parse.
-                    System.err.println("[FileHandler] WARN: Skipping malformed line: '"
-                            + line + "'. Reason: " + e.getMessage());
+                    logs.add(LogEntry.fromCSV(line));
+                } catch (LogParseException e) {
+                    // Caller gets the exact line and reason — not a generic JVM error
+                    System.err.println("[FileHandler] WARN: " + e.getMessage());
+                } catch (InvalidLevelException e) {
+                    // Level field in this CSV line is not INFO/WARN/ERROR
+                    System.err.println("[FileHandler] WARN: Skipping entry with invalid level — "
+                            + e.getMessage());
                 }
             }
 
