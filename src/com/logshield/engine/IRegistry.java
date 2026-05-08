@@ -28,7 +28,7 @@ import java.util.List;
  * complexity per method in its Javadoc.</p>
  *
  * @author  Virochan V
- * @version 1.0
+ * @version 2.0
  * @see     com.logshield.engine.RegistryManager
  * @see     com.logshield.app.LogShieldApp
  */
@@ -57,4 +57,8 @@ public interface IRegistry {
 
     // Return frequency of a pattern in the Trie
     int getPatternFrequency(String pattern);
+
+    // Returns k entries with highest severity scores using MinHeap
+    // Time Complexity: O(n log k) | Space Complexity: O(k)
+    LogEntry[] getTopAnomalies(int k);
 }

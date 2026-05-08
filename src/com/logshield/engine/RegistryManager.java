@@ -26,7 +26,7 @@ import java.util.HashMap;
  * before being mirrored into the in-memory cache, so no log entry is lost on a JVM crash.
  *
  * @author  Virochan V
- * @version 4.0
+ * @version 5.0
  * @see     com.logshield.storage.FileHandler
  * @see     com.logshield.algorithm.AlgorithmProvider
  */
@@ -213,6 +213,67 @@ public class RegistryManager implements IRegistry {
     // Time Complexity: O(1) — just returns the existing reference
     public LogEntry[] getSortedLogs() {
         return logsArray;
+    }
+    // -------------------------------------------------------------------------
+// getTopAnomalies(int k)
+//
+// Time Complexity : O(n log k) — we iterate all n entries, and each
+//                   PriorityQueue operation (add/poll) costs O(log k)
+//                   where k is the heap size limit. Since k is fixed (e.g. 5),
+//                   log k is effectively constant — making this near O(n).
+//
+// Space Complexity: O(k) — the heap never holds more than k entries
+//                   regardless of how many logs exist. This is the key
+//                   advantage over sorting all n entries: O(k) vs O(n).
+//
+// I chose MinHeap because we only need the top k entries — sorting
+// everything to find the top 5 wastes O(n²) time and O(n) space.
+// -------------------------------------------------------------------------
+
+    /**
+     * Returns the k log entries with the highest severity scores.
+     *
+     * <p>Uses a MinHeap (PriorityQueue) of fixed size k. The heap always
+     * evicts the lowest-severity entry when full, retaining only the
+     * highest-severity entries seen so far.</p>
+     *
+     * <p><b>Precondition:</b> none — works on unsorted data unlike binarySearch.<br>
+     * <b>Time Complexity:</b> O(n log k)<br>
+     * <b>Space Complexity:</b> O(k) — heap never exceeds k entries</p>
+     *
+     * @param k number of top anomalies to return
+     * @return array of up to k LogEntry objects with highest severity scores
+     */
+    public LogEntry[] getTopAnomalies(int k) {
+
+        // MinHeap — smallest severityScore sits at the top
+        // Comparator extracts severityScore from each LogEntry for comparison
+        // When heap is full, the minimum (top) is evicted — keeping only large scores
+        java.util.PriorityQueue<LogEntry> minHeap =
+                new java.util.PriorityQueue<>(k,
+                        (a, b) -> a.getSeverityScore() - b.getSeverityScore());
+
+        // Iterate every log entry in the HashMap cache
+        for (LogEntry entry : logCache.values()) {
+
+            if (minHeap.size() < k) {
+                // Heap not full yet — add unconditionally
+                minHeap.add(entry);
+
+            } else if (entry.getSeverityScore() > minHeap.peek().getSeverityScore()) {
+                // New entry beats the current minimum — evict minimum, add new entry
+                // peek() reads the minimum without removing it
+                // poll() removes and returns the minimum
+                minHeap.poll();
+                minHeap.add(entry);
+            }
+            // Otherwise: new entry is <= current minimum — ignore it
+            // The heap already has k better entries
+        }
+
+        // Drain heap into array — order is not guaranteed from PriorityQueue
+        // Convert to array so caller gets a clean, typed result
+        return minHeap.toArray(new LogEntry[0]);
     }
     // Returns all logs as a List for CLI display
     // Time Complexity: O(n) — converts HashMap values to List

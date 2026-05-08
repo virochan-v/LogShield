@@ -37,7 +37,7 @@ import java.util.Scanner;
  * </ul>
  *
  * @author  Virochan V
- * @version 3.0
+ * @version 4.0
  * @see     RegistryManager
  * @see     com.logshield.trie.Trie
  */
@@ -215,13 +215,30 @@ public class LogShieldApp {
                     }
                     break;
 
-                case 7: // Option 7: flip the loop flag → fall through to scanner.close()
+                case 7: // ── Show Top 5 Anomalies using MinHeap ──────────────────
+                    // O(n log k) — never sorts all n entries, only maintains k in memory
+                    LogEntry[] topAnomalies = registry.getTopAnomalies(5);
+
+                    if (topAnomalies.length == 0) {
+                        System.out.println("[INFO] No logs in memory.");
+                    } else {
+                        System.out.println("\n── Top 5 Anomalies (highest severity) ──");
+                        // Sort the k results for clean display — O(k log k), negligible
+                        java.util.Arrays.sort(topAnomalies,
+                                (a, b) -> b.getSeverityScore() - a.getSeverityScore());
+                        for (LogEntry e : topAnomalies) {
+                            System.out.println(e);
+                        }
+                    }
+                    break;
+
+                case 8: // ── Exit ────────────────────────────────────────────────
                     System.out.println("[LogShield] Goodbye.");
-                    running = false; // break the while loop gracefully
+                    running = false;
                     break;
 
                 default:
-                    System.out.println("[ERROR] Invalid option. Choose 1–7.");
+                    System.out.println("[ERROR] Invalid option. Choose 1–8.");
             }
         }
 
@@ -251,7 +268,8 @@ public class LogShieldApp {
         System.out.println("║ 4. Search log by severity    ║");
         System.out.println("║ 5. Search pattern in Trie    ║");
         System.out.println("║ 6. Display all logs          ║");
-        System.out.println("║ 7. Exit                      ║");
+        System.out.println("║ 7. Show top 5 anomalies      ║");
+        System.out.println("║ 8. Exit                      ║");
         System.out.println("╚══════════════════════════════╝");
         System.out.print("Choice: ");
     }
