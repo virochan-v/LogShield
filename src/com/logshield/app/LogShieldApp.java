@@ -37,7 +37,7 @@ import java.util.Scanner;
  * </ul>
  *
  * @author  Virochan V
- * @version 4.0
+ * @version 5.0
  * @see     RegistryManager
  * @see     com.logshield.trie.Trie
  */
@@ -92,13 +92,17 @@ public class LogShieldApp {
 
     public static void main(String[] args) {
 
+        // Print banner first — before any loading messages
+        printBanner();
+
         // Obtain the singleton RegistryManager — NEVER use 'new RegistryManager()'
         IRegistry registry = RegistryManager.getInstance();
 
         // Load persisted logs into the HashMap cache before showing the menu
-        System.out.println("[LogShield] Loading logs from: " + LOG_FILE_PATH);
-        registry.loadFromFile(LOG_FILE_PATH); // FileHandler reads and populates the cache
-
+        System.out.println("[INFO] Loading logs from: " + LOG_FILE_PATH);
+        registry.loadFromFile(LOG_FILE_PATH);
+        System.out.println("[INFO] Trie indexed · System ready");
+        System.out.println("[INFO] Enter a number from 1-8 to navigate");
         boolean running = true; // controls the menu loop; set false only on option 7
 
         while (running) {
@@ -244,6 +248,21 @@ public class LogShieldApp {
 
         scanner.close(); // release System.in — always close in the same class that opened it
     }
+    /**
+     * Prints the LogShield startup banner to stdout.
+     * Called once at application launch before loading logs.
+     * Gives the application a professional identity at first glance.
+     */
+    private static void printBanner() {
+        System.out.println();
+        System.out.println("╔═══════════════════════════════════════════╗");
+        System.out.println("║        L O G S H I E L D   v5.0           ║");
+        System.out.println("║        Real-Time Log Anomaly Detector     ║");
+        System.out.println("║        Author : Virochan V                ║");
+        System.out.println("║        GitHub : github.com/virochan-v     ║");
+        System.out.println("╚═══════════════════════════════════════════╝");
+        System.out.println();
+    }
 
     /**
      * Prints the LogShield interactive menu to {@code stdout}.
@@ -259,18 +278,18 @@ public class LogShieldApp {
      * <p>Called once per loop iteration, immediately before reading user input.</p>
      */
     private static void printMenu() {
-        System.out.println("\n╔══════════════════════════════╗");
-        System.out.println("║       LogShield Menu         ║");
-        System.out.println("╠══════════════════════════════╣");
-        System.out.println("║ 1. Add log entry manually    ║");
-        System.out.println("║ 2. Load logs from file       ║");
-        System.out.println("║ 3. Sort logs by severity     ║");
-        System.out.println("║ 4. Search log by severity    ║");
-        System.out.println("║ 5. Search pattern in Trie    ║");
-        System.out.println("║ 6. Display all logs          ║");
-        System.out.println("║ 7. Show top 5 anomalies      ║");
-        System.out.println("║ 8. Exit                      ║");
-        System.out.println("╚══════════════════════════════╝");
+        System.out.println("\n╔═══════════════════════════════════════════╗");
+        System.out.println("║              LogShield Menu               ║");
+        System.out.println("╠═══════════════════════════════════════════╣");
+        System.out.println("║  1. Add log entry manually                ║");
+        System.out.println("║  2. Load logs from file                   ║");
+        System.out.println("║  3. Sort logs by severity (Cycle Sort)    ║");
+        System.out.println("║  4. Search log by severity (Binary Search)║");
+        System.out.println("║  5. Search pattern in Trie                ║");
+        System.out.println("║  6. Display all logs                      ║");
+        System.out.println("║  7. Show top 5 anomalies (MinHeap)        ║");
+        System.out.println("║  8. Exit                                  ║");
+        System.out.println("╚═══════════════════════════════════════════╝");
         System.out.print("Choice: ");
     }
 }
