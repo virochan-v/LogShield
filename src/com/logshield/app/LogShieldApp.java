@@ -4,6 +4,7 @@ import com.logshield.engine.IRegistry;
 import com.logshield.model.LogEntry;
 import com.logshield.engine.RegistryManager;
 import com.logshield.exception.InvalidLevelException;
+import com.logshield.util.ConsoleColour;
 
 import java.util.InputMismatchException;
 import java.util.List;
@@ -37,7 +38,7 @@ import java.util.Scanner;
  * </ul>
  *
  * @author  Virochan V
- * @version 5.0
+ * @version 6.0
  * @see     RegistryManager
  * @see     com.logshield.trie.Trie
  */
@@ -99,10 +100,13 @@ public class LogShieldApp {
         IRegistry registry = RegistryManager.getInstance();
 
         // Load persisted logs into the HashMap cache before showing the menu
-        System.out.println("[INFO] Loading logs from: " + LOG_FILE_PATH);
+        System.out.println(ConsoleColour.CYAN + "[INFO] Loading logs from: "
+                + LOG_FILE_PATH + ConsoleColour.RESET);
         registry.loadFromFile(LOG_FILE_PATH);
-        System.out.println("[INFO] Trie indexed · System ready");
-        System.out.println("[INFO] Enter a number from 1-8 to navigate");
+        System.out.println(ConsoleColour.CYAN + "[INFO] Trie indexed · System ready"
+                + ConsoleColour.RESET);
+        System.out.println(ConsoleColour.CYAN + "[INFO] Enter a number from 1-8 to navigate"
+                + ConsoleColour.RESET);
         boolean running = true; // controls the menu loop; set false only on option 7
 
         while (running) {
@@ -156,8 +160,8 @@ public class LogShieldApp {
                 case 3:
                     registry.sortLogs();
                     System.out.println("\n── Sorted Logs (ascending severity) ──");
-                    for (LogEntry e : registry.getSortedLogs()) {  // array, not List
-                        System.out.println(e);
+                    for (LogEntry e : registry.getSortedLogs()) {
+                        printColoured(e);
                     }
                     break;
 
@@ -176,7 +180,8 @@ public class LogShieldApp {
                     LogEntry found = registry.searchBySeverity(targetSeverity); // AlgorithmProvider.binarySearch
 
                     if (found != null) {
-                        System.out.println("[FOUND] " + found);
+                        System.out.print("[FOUND] ");
+                        printColoured(found);
                     } else {
                         System.out.println("[NOT FOUND] No log with severity: " + targetSeverity);
                     }
@@ -214,7 +219,7 @@ public class LogShieldApp {
                     } else {
                         System.out.println("\n── All Logs ──");
                         for (LogEntry e : all) {
-                            System.out.println(e); // LogEntry.toString() should format cleanly
+                            printColoured(e); // LogEntry.toString() should format cleanly
                         }
                     }
                     break;
@@ -231,7 +236,7 @@ public class LogShieldApp {
                         java.util.Arrays.sort(topAnomalies,
                                 (a, b) -> b.getSeverityScore() - a.getSeverityScore());
                         for (LogEntry e : topAnomalies) {
-                            System.out.println(e);
+                            printColoured(e);
                         }
                     }
                     break;
@@ -277,6 +282,18 @@ public class LogShieldApp {
      *
      * <p>Called once per loop iteration, immediately before reading user input.</p>
      */
+    /**
+     * Prints a LogEntry to console with ANSI colour based on severity level.
+     * ERROR = Red, WARN = Yellow, INFO = Green.
+     * Colour is reset after each entry so subsequent output is unaffected.
+     *
+     * Time Complexity: O(L) — string formatting proportional to message length
+     */
+    private static void printColoured(LogEntry entry) {
+        String colour = ConsoleColour.forLevel(entry.getLevel());
+        System.out.println(colour + entry + ConsoleColour.RESET);
+    }
+
     private static void printMenu() {
         System.out.println("\n╔═══════════════════════════════════════════╗");
         System.out.println("║              LogShield Menu               ║");
