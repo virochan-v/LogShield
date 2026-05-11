@@ -159,10 +159,13 @@ public class LogShieldApp {
 
                 case 3:
                     registry.sortLogs();
-                    System.out.println("\n── Sorted Logs (ascending severity) ──");
-                    for (LogEntry e : registry.getSortedLogs()) {
+                    LogEntry[] sorted = registry.getSortedLogs();
+                    System.out.println("\n── Sorted Logs · "
+                            + sorted.length + " entries (ascending severity) ──");
+                    for (LogEntry e : sorted) {
                         printColoured(e);
                     }
+                    System.out.println("── End of sorted view ──");
                     break;
 
                 case 4: // ── Search log by severity score ────────────────────────
@@ -217,10 +220,11 @@ public class LogShieldApp {
                     if (all.isEmpty()) {
                         System.out.println("[INFO] No logs currently in memory.");
                     } else {
-                        System.out.println("\n── All Logs ──");
+                        System.out.println("\n── All Logs · " + all.size() + " entries ──");
                         for (LogEntry e : all) {
-                            printColoured(e); // LogEntry.toString() should format cleanly
+                            printColoured(e);
                         }
+                        System.out.println("── End of log display ──");
                     }
                     break;
 
@@ -231,7 +235,8 @@ public class LogShieldApp {
                     if (topAnomalies.length == 0) {
                         System.out.println("[INFO] No logs in memory.");
                     } else {
-                        System.out.println("\n── Top 5 Anomalies (highest severity) ──");
+                        System.out.println("\n── Top " + topAnomalies.length
+                                + " Anomalies (highest severity) ──");
                         // Sort the k results for clean display — O(k log k), negligible
                         java.util.Arrays.sort(topAnomalies,
                                 (a, b) -> b.getSeverityScore() - a.getSeverityScore());
@@ -261,7 +266,7 @@ public class LogShieldApp {
     private static void printBanner() {
         System.out.println();
         System.out.println("╔═══════════════════════════════════════════╗");
-        System.out.println("║        L O G S H I E L D   v5.0           ║");
+        System.out.println("║        L O G S H I E L D   v1.0           ║");
         System.out.println("║        Real-Time Log Anomaly Detector     ║");
         System.out.println("║        Author : Virochan V                ║");
         System.out.println("║        GitHub : github.com/virochan-v     ║");
