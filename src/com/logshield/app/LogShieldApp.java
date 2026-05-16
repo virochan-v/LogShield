@@ -38,7 +38,7 @@ import java.util.Scanner;
  * </ul>
  *
  * @author  Virochan V
- * @version 6.0
+ * @version 7.0
  * @see     RegistryManager
  * @see     com.logshield.trie.Trie
  */
@@ -127,24 +127,62 @@ public class LogShieldApp {
 
             switch (choice) {
 
-                case 1: // Option 1: collect id, message, severity from user → build LogEntry → delegate to RegistryManager
+                case 1:
+                    // ── Validate timestamp ───────────────────────────────────
                     System.out.print("Enter timestamp (e.g. 2024-01-15 10:30:00): ");
                     String timestamp = scanner.nextLine().trim();
 
+                    // Guard: timestamp cannot be blank — it is the HashMap key
+                    // A blank timestamp would silently overwrite other entries
+                    if (timestamp.isEmpty()) {
+                        System.out.println(ConsoleColour.RED
+                                + "[ERROR] Timestamp cannot be blank. Entry not saved."
+                                + ConsoleColour.RESET);
+                        break;
+                    }
+
+                    // ── Validate level ───────────────────────────────────────
                     System.out.print("Enter level (INFO / WARN / ERROR): ");
                     String level = scanner.nextLine().trim().toUpperCase();
 
+                    // Guard: level must be one of the three recognised values
+                    // InvalidLevelException will catch this — but we validate early
+                    // to give a friendlier message before hitting the exception
+                    if (!level.equals("INFO") && !level.equals("WARN") && !level.equals("ERROR")) {
+                        System.out.println(ConsoleColour.RED
+                                + "[ERROR] Invalid level '" + level
+                                + "'. Must be INFO, WARN, or ERROR. Entry not saved."
+                                + ConsoleColour.RESET);
+                        break;
+                    }
+
+                    // ── Validate message ─────────────────────────────────────
                     System.out.print("Enter message: ");
                     String message = scanner.nextLine().trim();
 
+                    // Guard: message cannot be blank — an empty log entry has no diagnostic value
+                    if (message.isEmpty()) {
+                        System.out.println(ConsoleColour.RED
+                                + "[ERROR] Message cannot be blank. Entry not saved."
+                                + ConsoleColour.RESET);
+                        break;
+                    }
+
+                    // ── All inputs valid — create and store the entry ────────
                     try {
                         LogEntry entry = new LogEntry(timestamp, level, message);
                         registry.addLog(entry);
-                        System.out.println("[OK] Log entry added: " + entry);
+                        System.out.println(ConsoleColour.GREEN
+                                + "[OK] Log entry added successfully."
+                                + ConsoleColour.RESET);
+                        // Show the entry back to the user with colour so they can confirm
+                        printColoured(entry);
                     } catch (InvalidLevelException e) {
-                        // Tell the user exactly what was wrong — not a generic error message
-                        System.out.println("[ERROR] " + e.getMessage());
-                        System.out.println("[INFO] Please enter one of: INFO, WARN, ERROR");
+                        // Should not reach here — pre-validated above
+                        // Kept as a safety net in case validation logic drifts
+                        System.out.println(ConsoleColour.RED
+                                + "[ERROR] " + e.getMessage()
+                                + ConsoleColour.RESET);
                     }
                     break;
 
