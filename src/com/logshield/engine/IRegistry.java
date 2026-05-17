@@ -58,6 +58,11 @@ public interface IRegistry {
     // Return frequency of a pattern in the Trie
     int getPatternFrequency(String pattern);
 
+    // Clears all log data from disk and resets in-memory state
+    // Use for reset operations and clean demo sessions only
+    // Time Complexity: O(1) — truncates file to zero bytes
+    void clearFile();
+
     // Returns k entries with highest severity scores using MinHeap
     // Time Complexity: O(n log k) | Space Complexity: O(k)
     LogEntry[] getTopAnomalies(int k);

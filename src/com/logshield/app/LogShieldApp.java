@@ -284,13 +284,30 @@ public class LogShieldApp {
                     }
                     break;
 
-                case 8: // ── Exit ────────────────────────────────────────────────
+                case 9: // ── Clear all logs ──────────────────────────────────
+                    System.out.print("Are you sure? This clears all logs (y/n): ");
+                    String confirm = scanner.nextLine().trim().toLowerCase();
+
+                    if (confirm.equals("y")) {
+                        // Clear disk file
+                        registry.clearFile();
+                        // Reset in-memory state by reloading empty file
+                        registry.loadFromFile(RegistryManager.LOG_FILE_PATH);
+                        System.out.println(ConsoleColour.CYAN
+                                + "[INFO] All logs cleared. System reset."
+                                + ConsoleColour.RESET);
+                    } else {
+                        System.out.println("[INFO] Clear cancelled.");
+                    }
+                    break;
+
+                case 8:
                     System.out.println("[LogShield] Goodbye.");
                     running = false;
                     break;
 
                 default:
-                    System.out.println("[ERROR] Invalid option. Choose 1–8.");
+                    System.out.println("[ERROR] Invalid option. Choose 1–9.");
             }
         }
 
@@ -349,6 +366,7 @@ public class LogShieldApp {
         System.out.println("║  6. Display all logs                      ║");
         System.out.println("║  7. Show top 5 anomalies (MinHeap)        ║");
         System.out.println("║  8. Exit                                  ║");
+        System.out.println("║  9. Clear all logs                        ║");
         System.out.println("╚═══════════════════════════════════════════╝");
         System.out.print("Choice: ");
     }
