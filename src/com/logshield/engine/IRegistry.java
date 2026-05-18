@@ -66,4 +66,8 @@ public interface IRegistry {
     // Returns k entries with highest severity scores using MinHeap
     // Time Complexity: O(n log k) | Space Complexity: O(k)
     LogEntry[] getTopAnomalies(int k);
+
+    // Returns log breakdown: [total, INFO count, WARN count, ERROR count]
+    // Time Complexity: O(n) | Space Complexity: O(1)
+    int[] getStatistics();
 }

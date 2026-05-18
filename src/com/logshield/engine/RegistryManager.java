@@ -280,6 +280,50 @@ public class RegistryManager implements IRegistry {
     public java.util.List<LogEntry> getAllLogs() {
         return new java.util.ArrayList<>(logCache.values());
     }
+
+    // -------------------------------------------------------------------------
+    // getStatistics()
+    //
+    // Time Complexity : O(n) — single pass through all log entries
+    // Space Complexity: O(1) — only three integer counters, no extra structures
+    //
+    // Returns an int array of size 4:
+    //   index 0 = total entries
+    //   index 1 = INFO count
+    //   index 2 = WARN count
+    //   index 3 = ERROR count
+    // -------------------------------------------------------------------------
+
+    /**
+     * Returns a breakdown of log entries by severity level.
+     *
+     * <p>Performs a single O(n) pass through the HashMap cache,
+     * counting entries at each severity level. No sorting required.</p>
+     *
+     * <p><b>Time Complexity:</b> O(n) — one pass through all entries.<br>
+     * <b>Space Complexity:</b> O(1) — three counters only.</p>
+     *
+     * @return int[] where [0]=total, [1]=INFO, [2]=WARN, [3]=ERROR
+     */
+    public int[] getStatistics() {
+        int total = 0;
+        int infoCount  = 0;
+        int warnCount  = 0;
+        int errorCount = 0;
+
+        // Single pass — count each level
+        for (LogEntry entry : logCache.values()) {
+            total++;
+            switch (entry.getLevel().toUpperCase()) {
+                case "INFO":  infoCount++;  break;
+                case "WARN":  warnCount++;  break;
+                case "ERROR": errorCount++; break;
+            }
+        }
+
+        return new int[]{total, infoCount, warnCount, errorCount};
+    }
+
     // Clears the log file on disk — use only for testing/reset
     // Time Complexity: O(1) — just overwrites with empty content
     public void clearFile() {

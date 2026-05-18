@@ -105,7 +105,7 @@ public class LogShieldApp {
         registry.loadFromFile(LOG_FILE_PATH);
         System.out.println(ConsoleColour.CYAN + "[INFO] Trie indexed · System ready"
                 + ConsoleColour.RESET);
-        System.out.println(ConsoleColour.CYAN + "[INFO] Enter a number from 1-8 to navigate"
+        System.out.println(ConsoleColour.CYAN + "[INFO] Enter a number from 1-10 to navigate"
                 + ConsoleColour.RESET);
         boolean running = true; // controls the menu loop; set false only on option 7
 
@@ -118,7 +118,7 @@ public class LogShieldApp {
                 choice = scanner.nextInt(); // blocks until user enters a number
             } catch (InputMismatchException e) {
                 // User typed letters instead of a number — consume the bad token
-                System.out.println("[ERROR] Please enter a number between 1 and 7.");
+                System.out.println("[ERROR] Please enter a number between 1 and 10.");
                 scanner.nextLine(); // flush the invalid input so the loop doesn't spin infinitely
                 continue;           // restart the loop without processing the invalid choice
             }
@@ -145,7 +145,7 @@ public class LogShieldApp {
                     System.out.print("Enter level (INFO / WARN / ERROR): ");
                     String level = scanner.nextLine().trim().toUpperCase();
 
-                    // Guard: level must be one of the three recognised values
+                    // Guard: level must be one of the three recognized values
                     // InvalidLevelException will catch this — but we validate early
                     // to give a friendlier message before hitting the exception
                     if (!level.equals("INFO") && !level.equals("WARN") && !level.equals("ERROR")) {
@@ -301,13 +301,55 @@ public class LogShieldApp {
                     }
                     break;
 
+                case 10: // ── Log Statistics Dashboard ─────────────────────────
+                    int[] stats = registry.getStatistics();
+                    int total      = stats[0];
+                    int infoCount  = stats[1];
+                    int warnCount  = stats[2];
+                    int errorCount = stats[3];
+
+                    // Calculate percentages — guard against division by zero
+                    double infoPercent  = total > 0 ? (infoCount  * 100.0) / total : 0;
+                    double warnPercent  = total > 0 ? (warnCount  * 100.0) / total : 0;
+                    double errorPercent = total > 0 ? (errorCount * 100.0) / total : 0;
+
+                    System.out.println("\n╔═══════════════════════════════════════════╗");
+                    System.out.println("║         Log Statistics Dashboard          ║");
+                    System.out.println("╠═══════════════════════════════════════════╣");
+                    System.out.printf( "║  Total entries : %-25d║%n", total);
+                    System.out.println("╠═══════════════════════════════════════════╣");
+                    System.out.printf( "║  " + ConsoleColour.GREEN  + "INFO  : %-4d" + ConsoleColour.RESET
+                            + "  (%.1f%%)%-17s   ║%n", infoCount,  infoPercent,  "");
+                    System.out.printf( "║  " + ConsoleColour.YELLOW + "WARN  : %-4d" + ConsoleColour.RESET
+                            + "  (%.1f%%)%-17s   ║%n", warnCount,  warnPercent,  "");
+                    System.out.printf( "║  " + ConsoleColour.RED    + "ERROR : %-4d" + ConsoleColour.RESET
+                            + "  (%.1f%%)%-17s   ║%n", errorCount, errorPercent, "");
+                    System.out.println("╠═══════════════════════════════════════════╣");
+
+                    // Health indicator — gives operator instant system status
+                    String health;
+                    if (total == 0) {
+                        health = "NO DATA";
+                    } else if (errorPercent == 0) {
+                        health = ConsoleColour.GREEN + "HEALTHY" + ConsoleColour.RESET;
+                    } else if (errorPercent <= 10) {
+                        health = ConsoleColour.YELLOW + "DEGRADED" + ConsoleColour.RESET;
+                    } else {
+                        health = ConsoleColour.RED + "CRITICAL" + ConsoleColour.RESET;
+                    }
+
+                    System.out.println("║  System health : " + health
+                            + "                 ║");
+                    System.out.println("╚═══════════════════════════════════════════╝");
+                    break;
+
                 case 8:
                     System.out.println("[LogShield] Goodbye.");
                     running = false;
                     break;
 
                 default:
-                    System.out.println("[ERROR] Invalid option. Choose 1–9.");
+                    System.out.println("[ERROR] Invalid option. Choose 1–10.");
             }
         }
 
@@ -367,6 +409,7 @@ public class LogShieldApp {
         System.out.println("║  7. Show top 5 anomalies (MinHeap)        ║");
         System.out.println("║  8. Exit                                  ║");
         System.out.println("║  9. Clear all logs                        ║");
+        System.out.println("║  10. Log statistics dashboard             ║");
         System.out.println("╚═══════════════════════════════════════════╝");
         System.out.print("Choice: ");
     }
